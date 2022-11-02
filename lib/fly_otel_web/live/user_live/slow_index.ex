@@ -1,4 +1,4 @@
-defmodule FlyOtelWeb.UserLive.Index do
+defmodule FlyOtelWeb.UserLive.SlowIndex do
   use FlyOtelWeb, :live_view
 
   alias FlyOtel.Accounts
@@ -41,7 +41,6 @@ defmodule FlyOtelWeb.UserLive.Index do
   end
 
   defp list_users do
-    # Accounts.list_users_bad_perf()
-    Accounts.list_users_good_perf()
+    Accounts.list_users_bad_perf()
   end
 end

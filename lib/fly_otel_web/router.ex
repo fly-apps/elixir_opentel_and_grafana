@@ -19,7 +19,8 @@ defmodule FlyOtelWeb.Router do
 
     get "/", PageController, :index
 
-    live "/users", UserLive.Index, :index
+    live "/users-fast", UserLive.FastIndex, :index
+    live "/users-slow", UserLive.SlowIndex, :index
     live "/users/new", UserLive.Index, :new
     live "/users/:id/edit", UserLive.Index, :edit
 

@@ -7,6 +7,16 @@ defmodule FlyOtel.Application do
 
   @impl true
   def start(_type, _args) do
+    # Set up the OpenTelemetry to trace library telemetry events
+    :ok = :opentelemetry_cowboy.setup()
+    :ok = OpentelemetryPhoenix.setup()
+    :ok = OpentelemetryLiveView.setup()
+
+    :ok =
+      FlyOtel.Repo.config()
+      |> Keyword.fetch!(:telemetry_prefix)
+      |> OpentelemetryEcto.setup()
+
     children = [
       # Start the Ecto repository
       FlyOtel.Repo,

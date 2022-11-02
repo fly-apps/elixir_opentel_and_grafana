@@ -1,0 +1,21 @@
+version: '3.3'
+
+services:
+  grafana:
+    image: grafana/grafana:9.2.2
+    volumes:
+      - ./grafana.ini:/etc/grafana/grafana.ini
+    depends_on:
+      - tempo
+    ports:
+      - '3000:3000'
+
+  tempo:
+    image: grafana/tempo:1.5.0
+    command: [ "-config.file=/etc/tempo.yaml" ]
+    volumes:
+      - ./tempo-config.yaml:/etc/tempo.yaml
+    ports:
+      - '3200:3200'
+      - '4318:4318'
+

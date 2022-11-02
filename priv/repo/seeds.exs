@@ -1,11 +1,20 @@
-# Script for populating the database. You can run it as:
-#
-#     mix run priv/repo/seeds.exs
-#
-# Inside the script, you can read and write to any of your
-# repositories directly:
-#
-#     FlyOtel.Repo.insert!(%FlyOtel.SomeSchema{})
-#
-# We recommend using the bang functions (`insert!`, `update!`
-# and so on) as they will fail if something goes wrong.
+alias Faker.Person
+alias Faker.Lorem
+
+alias FlyOtel.Accounts
+alias FlyOtel.Accounts.TodoListItem
+alias FlyOtel.Accounts.User
+
+1..20
+|> Enum.each(fn _ ->
+  {:ok, %User{} = user} =
+    Accounts.create_user(%{
+      age: Enum.random(18..65),
+      name: "#{Person.first_name()} #{Person.last_name()}"
+    })
+
+  1..Enum.random(5..50)
+  |> Enum.each(fn _ ->
+    {:ok, %TodoListItem{}} = Accounts.create_todo_list_item(%{task: Lorem.sentence()}, user)
+  end)
+end)

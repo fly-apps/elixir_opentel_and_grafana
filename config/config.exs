@@ -11,6 +11,10 @@ config :fly_otel,
   ecto_repos: [FlyOtel.Repo],
   generators: [binary_id: true]
 
+config :fly_otel, FlyOtel.Repo,
+  migration_primary_key: [name: :id, type: :binary_id],
+  migration_timestamps: [type: :naive_datetime_usec]
+
 # Configures the endpoint
 config :fly_otel, FlyOtelWeb.Endpoint,
   url: [host: "localhost"],

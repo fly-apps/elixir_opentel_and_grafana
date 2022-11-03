@@ -131,4 +131,13 @@ With this in place, we are able to configure our application at runtime so that 
 service. In in this example we will be leaning on Tempo to capture and persist traces. Once the traces are in Tempo, we
 can then use Grafana to explore the persisted traces and see why our endpoints differ in performance.
 
+As you can see, there is not a lot of ceremony or effort on our part in order to start collecting traces from our
+application. Next, let's see how we can deploy our application and all of its dependencies to Fly.io so we can capture
+and view some real traces.
+
 ## Deploying and Observing Your Application on Fly.io
+
+Let's being by installing the `flyctl` CLI utility and authenticating with fly.io so we can start deploying our services
+using the following guide: https://fly.io/docs/hands-on/install-flyctl/.
+
+After you have done that,

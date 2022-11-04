@@ -86,8 +86,10 @@ why the endpoint is slow...but it'll really be clear once you look at a trace fr
 `/users-slow` route is called.
 
 All the code of the sample application can be found [here](NEED PUBLIC GIT_HUB) but let's start by going through the
-application specific changes that we need to make in order to instrument our application. First we'll open up `mix.exs`
-and add the following dependencies:
+application specific changes that we need to make in order to instrument our application. As a note, this demo
+application was generated via the `mix phx.new APP_NAME --binary-id` command, with only a few changes made to support
+deploying to Fly.io. Let's first cover how to set up the OpenTelemetry libraries by opening up `mix.exs` and adding the
+following dependencies:
 
 ```elixir
 defp deps do
@@ -109,6 +111,10 @@ After doing that we can run `mix deps.get` in order to fetch the dependencies fr
 
 ```elixir
 def start(_type, _args) do
+  if System.get_env("ECTO_IPV6") do
+    :httpc.set_option(:ipfamily, :inet6fb4)
+  end
+
   :ok = :opentelemetry_cowboy.setup()
   :ok = OpentelemetryPhoenix.setup()
   :ok = OpentelemetryLiveView.setup()
@@ -122,40 +128,117 @@ def start(_type, _args) do
 end
 ```
 
-The first three `setup/0` calls set up the Cowboy, Phoenix, and LiveView tracing libraries. These calls, instruct the
-OTel libraries to attach handlers to the telemetry events that are emitted by each of the underlying libraries. The
-Ecto tracing library requires a little more work to set up as we need to fetch the configured telemetry prefix so that
-the OTel library can attach the handler to the correct Repo event. With that in place, all that needs to be done now is
-to update some configuration in `runtime.exs` in order for the telemetry exporter to know where to send trace data. Add
-the following inside of the `config_env() == :prod` if-block:
+The `if-block` in the beginning checks for the presence of the `ECTO_IPV6` environment variable prior to setting an
+`:httpc` option. The reason for this being that when your applications are deployed to Fly.io, they are interconnected
+by a mesh of [Wireguard tunnels that are using IPv6](https://fly.io/docs/reference/private-networking/), and by default
+the Erlang HTTP client `:httpc` is configured to use IPv4. In order for our OTel exporter to publish our traces to Tempo
+it will need the `:inet6fb4` option set so that it first attempts to connect to the remote host via IPv6, while falling
+back to IPv4 if that fails. We lean on the `ECTO_IPV6` environment variable since Ecto is also configured to apply this
+`socket_options` if the environment variable is present (look at the `config/runtime.exs` if you are interested in
+seeing how this is set up).
+
+Next we have a few Opentelemetry library calls that configure the trace collectors. The first three `setup/0` calls set
+up the Cowboy, Phoenix, and LiveView tracing libraries. These calls, instruct the OTel libraries to attach handlers to
+the telemetry events that are emitted by each of the underlying libraries. The Ecto tracing library requires a little
+more work to set up as we need to fetch the configured telemetry prefix so that the OTel library can attach the handler
+to the correct Repo event.
+
+With that in place, all that needs to be done now is to update some configuration in `runtime.exs` in order for the
+telemetry exporter to know where to send trace data. Add the following inside of the `config_env() == :prod` if-block:
 
 ```elixir
-config :opentelemetry_exporter,
-  otlp_protocol: :http_protobuf,
-  otlp_endpoint: System.fetch_env!("TEMPO_URL")
+if config_env() == :prod do
+  config :opentelemetry_exporter,
+    otlp_protocol: :http_protobuf,
+    otlp_endpoint: System.fetch_env!("OTLP_ENDPOINT")
+
+  ...
+end
 ```
 
 With this in place, we are able to configure our application at runtime so that it is able to send traces to the correct
 service. In in this example we will be leaning on Tempo to capture and persist traces. Once the traces are in Tempo, we
 can then use Grafana to explore the persisted traces and see why our endpoints differ in performance.
 
-As you can see, there is not a lot of ceremony or effort on our part in order to start collecting traces from our
+As you can see, there is not a lot of ceremony or effort needed on our part in order to start collecting traces from our
 application. Next, let's see how we can deploy our application and all of its dependencies to Fly.io so we can capture
 and view some real traces.
 
 ## Deploying and Observing Your Application on Fly.io
 
-Let's being by installing the `flyctl` CLI utility and authenticating with fly.io so we can start deploying our services
+Let's being by installing the `flyctl` CLI utility and authenticating with Fly.io so we can start deploying our services
 using the following guide: https://fly.io/docs/hands-on/install-flyctl/.
 
-After you have done that, we are ready to start deploying all of the necessary services including our trace enabled
-Phoenix LiveView application. Let's begin by deploying Tempo which will store all of the traces that our collector
-exports.
+With that in place, you are ready to start deploying all of the necessary services including our trace enabled Phoenix
+LiveView application. Let's begin by deploying Tempo which will store all of the traces that our collector exports.
 
 ### Tempo
 
-In order to run Tempo in fly.io, we'll need to create our own Docker container that
+In order to run Tempo in Fly.io, we'll need to create our own Docker container that wraps the Docker container provided
+to us from Grafana. This below Dockerfile is the bare minimum required to deploy Tempo to Fly.io and will probably need
+some more work and configuration if you want to set this up for production:
+
+```dockerfile
+FROM grafana/tempo:1.5.0
+
+COPY ./tempo-config.yaml /etc/tempo.yaml
+
+CMD ["/tempo", "-config.file=/etc/tempo.yaml"]
+```
+
+The `tempo-config.yaml` file that is being copied over configures how Tempo listens for trace data and how it stores it.
+Similarly to the Dockerfile, this is the minimum requirement to get Tempo up and running and you will most likely need
+some additional configuration in place for a production application. The contents of the YAML file can be seen here:
+
+```yaml
+server:
+  http_listen_port: 3200
+
+search_enabled: true
+
+distributor:
+  receivers:
+    otlp:
+      protocols:
+        http:
+          endpoint: "0.0.0.0:4318"
+
+storage:
+  trace:
+    backend: local
+    block:
+      bloom_filter_false_positive: .05
+      index_downsample_bytes: 1000
+      encoding: zstd
+    wal:
+      path: /tmp/tempo/wal
+      encoding: snappy
+    local:
+      path: /tmp/tempo/blocks
+    pool:
+      max_workers: 100
+      queue_depth: 10000
+```
+
+With the Dockerfile and configuration located in the same directory, all that is required now is a `fly.toml` file in
+the same directory so you can deploy Tempo. The contents of your `fly.toml` file should contain the following:
+
+```toml
+app = "YOUR-APP-tempo"
+
+[build]
+dockerfile = "./Dockerfile"
+```
+
+If you have deployed services to Fly.io before, you may be wondering why there is no `[[services]]` section. The reason
+for this being that it is best to keep this service off of the public internet as only Grafana and the Phoenix
+application need to communicate with it.
+
+With that all in place, all that is left is to run `flyctl deploy` in the directory with all of the files and Tempo
+should be deployed! With that going, let's deploy Grafana next.
 
 ### Grafana
+
+#### Configuring Tempo Datasource in Grafana
 
 ### Phoenix App + Postgres

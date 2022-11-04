@@ -144,32 +144,31 @@ can use Grafana to explore the persisted traces and see why our endpoints differ
 Hopefully, it's clear that there is not a lot of ceremony or effort needed on our part to start collecting traces from our
 application.
 
-Next, we'll deploy our application to Fly.io to capture and view some real traces!
+Next, we'll deploy our application to Fly.io so we can capture and view some real traces!
 
 ## Deploying and Observing Your Application on Fly.io
 
-Let's being by installing the `flyctl` CLI utility and authenticating with Fly.io so we can start deploying our services
+Let's start by installing the `flyctl` CLI utility and authenticating with Fly.io so we can start deploying our services
 using the following guide: https://fly.io/docs/hands-on/install-flyctl/.
 
-With that in place, you are ready to start deploying all of the necessary services including our trace enabled Phoenix
+With that done, you are ready to start deploying all of the necessary services including our trace enabled Phoenix
 LiveView application. Let's begin by deploying our Phoenix application.
 
 ### Phoenix App + Postgres
 
 To deploy the instrumented Phoenix LiveView application, we first need to update the `fly.toml` file to reflect the name
-of your application. Specifically, you will need to update the following fields:
+of the application. Specifically, we need to update the following fields:
 
 - Update the `OTEL_RESOURCE_ATTRIBUTES` environment variable to have the correct `service.name` value for your service.
 - Update `OTLP_ENDPOINT` environment variable to have the correct URL for the Tempo service. The URL will have the
-  following format: `http://REGION.YOUR-APP-tempo.internal:4318` where `REGION` is one of the Fly.io datacenter regions.
-- Update the `PHX_HOST` environment variable to reflect the URL of your application based on your application name.
+  following format: `http://REGION.YOUR-APP-tempo.internal:4318` where `REGION` is one of the [Fly.io datacenter regions](https://fly.io/docs/reference/regions/).
+- Update the `PHX_HOST` environment variable to reflect the URL for the application based on the application name.
 
 With those fields updated, you can run `fly launch` and let the Fly.io CLI tool do the heavy lifting. Be sure to create
 a Postgres database when prompted so your application has something to communicate with. After the application is up and
 running, we'll want to hydrate the database with some data. Connect to the running instance by running 
 `flyctl ssh console` in the CLI. After you connect to the Phoenix LiveView application, go ahead and run 
-`/app/bin/YOUR_APP REMOTE` to attach an IEx session to the live application. After you connect to the application, you
-can run the following snippet of Elixir code to populate the database with some initial data:
+`/app/bin/YOUR_APP REMOTE` to attach an IEx session to the live application. After connecting to the application, run the following snippet of Elixir code to populate the database with some initial data:
 
 ```elixir
 alias Faker.Person
@@ -194,13 +193,15 @@ alias FlyOtel.Accounts.User
 end)
 ```
 
-With that done, you can navigate to your application in a browser (`https://YOUR-APP.fly.dev/users-fast`) to see it in
-action! Next we'll be deploying Tempo which will store all of the traces that our collector exports.
+With that done, we can vist the application in a browser (`https://YOUR-APP.fly.dev/users-fast`) to see it in
+action! 
+
+Next we'll deploy Tempo to store all of the traces that our collector exports.
 
 ### Tempo
 
-In order to run Tempo in Fly.io, we'll need to create our own Docker container that wraps the Docker container provided
-to us from Grafana. This below Dockerfile is the bare minimum required to deploy Tempo to Fly.io and will probably need
+To run Tempo in Fly.io, we need to create our own Docker container that wraps the Docker container provided
+to us from Grafana. (TODO: PREVIOUS SENTENCE IS A BIT CONFUSING, it doesn't look like we are "wrapping" it.) The following Dockerfile is the bare minimum required to deploy Tempo to Fly.io and will probably need
 some more work and configuration if you want to set this up for production:
 
 ```dockerfile
@@ -211,9 +212,9 @@ COPY ./tempo-config.yaml /etc/tempo.yaml
 CMD ["/tempo", "-config.file=/etc/tempo.yaml"]
 ```
 
-The `tempo-config.yaml` file that is being copied over configures how Tempo listens for trace data and how it stores it.
-Similarly to the Dockerfile, this is the minimum requirement to get Tempo up and running and you will most likely need
-some additional configuration in place for a production application. The contents of the YAML file can be seen here:
+In that short Dockerfile, it mentioned `tempo-config.yaml`. We'll create the file to copy into the Dockerfile and configure how Tempo listens for trace data and how to store the data. Similar to the Dockerfile, this is the minimum requirement to get Tempo up and running and for a production application some additional configuration might be needed. The contents of the YAML file are:
+
+Filename: `temp-config.yaml`
 
 ```yaml
 server:
@@ -245,8 +246,8 @@ storage:
       queue_depth: 10000
 ```
 
-With the Dockerfile and configuration located in the same directory, all that is required now is a `fly.toml` file in
-the same directory so you can deploy Tempo. The contents of your `fly.toml` file should contain the following:
+With the Dockerfile and configuration located in the same directory, all we need is a `fly.toml` file in
+the same directory so we can deploy Tempo. The contents of the `fly.toml` file should contain the following:
 
 ```toml
 app = "YOUR-APP-tempo"
@@ -255,12 +256,14 @@ app = "YOUR-APP-tempo"
 dockerfile = "./Dockerfile"
 ```
 
-If you have deployed services to Fly.io before, you may be wondering why there is no `[[services]]` section. The reason
-for this being that it is best to keep this service off of the public internet as only Grafana and the Phoenix
-application need to communicate with it.
+For those familiar with deploying services on Fly.io, they may wonder why there is no `[[services]]` section. The reason
+is, we don't want this service accessible from the public internet. We only want it available internally on our network for Grafana and our Phoenix
+application to communicate with.
 
 With that all in place, all that is left is to run `flyctl apps create YOUR-APP-tempo && flyctl deploy` in the directory
-with all of the files and Tempo should be deployed! With that going, let's deploy Grafana next.
+with all of the files and Tempo should be deployed! 
+
+With that going, let's deploy Grafana next.
 
 ### Grafana
 

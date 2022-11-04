@@ -41,9 +41,10 @@ together to give us application observability:
 - **Traces:** Traces are a collection of related events with each event containing metadata as to what happened and for how
   long. Traces can span across call stacks on a single machine and even across services via distributed tracing.
 
-In this article, we'll be focusing on the tracing observability pillar. Specifically, we'll see how we can leverage
-the OpenTelemetry tracing tooling to identify performance issues in an Elixir Phoenix LiveView application. Let's dive
-into what OpenTelemetry is and how we can set it up in our LiveView application.
+In this article, we'll focus on the tracing observability pillar. Specifically, we'll see how we can leverage
+the OpenTelemetry tracing tooling to identify performance issues in an Elixir Phoenix LiveView application. 
+
+Let's dive into OpenTelemetry. We'll start with what it is and how we can use it in our LiveView application.
 
 ## Configuring OpenTelemetry in Elixir
 
@@ -54,22 +55,21 @@ languages](https://opentelemetry.io/docs/getting-started/dev/) already including
 
 At a high level, the [OTel standard specifies a few different
 components](https://opentelemetry.io/docs/concepts/components/) that need to be available in order to ship logs, metrics
-and traces from your applications. The API and SDK components are what you are leaning on when you instrument your
+and traces from your applications. The API and SDK components are what we lean on when we instrument our
 application with the tracing library for Ecto for example. The collector component, is what that Ecto tracing library
-will ship telemetry data to, which will then in turn export that telemetry data to Jaeger, Tempo, or whatever you are
-using to persist sample traces.
+ships telemetry data to, which, in turn, exports that telemetry data to Jaeger, Tempo, or whatever we choose to
+use to persist sample traces.
 
 Luckily, instrumenting your Elixir applications isn't too hard thanks to all of the hard work done by the contributors
-to the [Hex OpenTelemetry organization](https://hex.pm/orgs/opentelemetry). For this article, I put together a sample
+to the [Hex OpenTelemetry organization](https://hex.pm/orgs/opentelemetry). For this article, we'll look at a sample
 TODO list LiveView application that has two routes of interest. `/users-fast` and `/users-slow` both list all of the
 users of the application and also list how many TODO list items each of them have in their queue. As the names of the
 routes imply, one of the routes responds quickly, and the other not so much. The question that we need to answer is why
-is this occurring and how we can remedy the problem. If you noticed the title of the article you may have an idea as to
-why the endpoint is slow...but it'll really be clear once you look at a trace from the application when the
-`/users-slow` route is called.
+is this occurring and how we can remedy the problem. The title of the article hints at the problem... but it'll really be clear once we see a trace from the application when the
+`/users-slow` route.
 
-All the code of the sample application can be found [here](NEED PUBLIC GIT_HUB) but let's start by going through the
-application specific changes that we need to make in order to instrument our application. As a note, this demo
+All the code of the sample application can be found [here](NEED PUBLIC GIT_HUB - TODO: Transfer to `fly-apps` org?) but let's start by going through the
+application specific changes needed to instrument our application. As a note, this demo
 application was generated via the `mix phx.new APP_NAME --binary-id` command, with only a few changes made to support
 deploying to Fly.io. Let's first cover how to set up the OpenTelemetry libraries by opening up `mix.exs` and adding the
 following dependencies:
@@ -89,8 +89,7 @@ defp deps do
 end
 ```
 
-After doing that we can run `mix deps.get` in order to fetch the dependencies from Hex. Next, you'll want to open up the
-`application.ex` file and update the `start/1` callback as follows:
+After that, we run `mix deps.get` to fetch the dependencies from Hex. Next, we'll open up `application.ex` and update the `start/1` callback as follows:
 
 ```elixir
 def start(_type, _args) do
@@ -112,11 +111,11 @@ end
 ```
 
 The `if-block` in the beginning checks for the presence of the `ECTO_IPV6` environment variable prior to setting an
-`:httpc` option. The reason for this being that when your applications are deployed to Fly.io, they are interconnected
-by a mesh of [Wireguard tunnels that are using IPv6](https://fly.io/docs/reference/private-networking/), and by default
+`:httpc` option. The reason for this being that when applications are deployed to Fly.io, they are interconnected
+by a mesh of [IPv6 Wireguard tunnels](https://fly.io/docs/reference/private-networking/), and by default
 the Erlang HTTP client `:httpc` is configured to use IPv4. In order for our OTel exporter to publish our traces to Tempo
-it will need the `:inet6fb4` option set so that it first attempts to connect to the remote host via IPv6, while falling
-back to IPv4 if that fails. We lean on the `ECTO_IPV6` environment variable since Ecto is also configured to apply this
+it needs the `:inet6fb4` option set so that it first attempts to connect to the remote host via IPv6, while falling
+back to IPv4 if needed. We lean on the `ECTO_IPV6` environment variable since Ecto is also configured to apply this
 `socket_options` if the environment variable is present (look at the `config/runtime.exs` if you are interested in
 seeing how this is set up).
 

@@ -285,9 +285,16 @@ $ flyctl proxy 3000:3000
 With that, you'll be able to open up a browser, navigate to `http://localhost:3000` and access your Grafana instance (by
 default the username and password are both `admin`)! After you log in, go to the data source configuration page 
 (`http://localhost:3000/datasources`) and click the `Add data source` button. After that, look for Tempo in the list of
-available data sources (under `Distributed tracing`) and select it.
+available data sources (under `Distributed tracing`) and select it. On the next page the only field that you will need
+to fill out is the `URL` field and you will need to fill it out as shown below (substituting `REGION` with the region
+where you Tempo instance is running and substituting `YOUR-APP` with the name you gave Tempo when you created it):
 
-![Configure Tempo data source](.images/config_data_source.png "Configure Tempo data source")
+![Configure Tempo data source](./images/config_data_source.png "Configure Tempo data source")
+
+If all goes well, after you click `Save & test`, you should a success message:
+
+
+![Configured Tempo data source](./images/data_source_success.png "Configured Tempo data source")
 
 ### Phoenix App + Postgres
 

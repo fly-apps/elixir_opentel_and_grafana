@@ -361,4 +361,16 @@ something like so:
 
 ![Slow N+1 trace](./images/slow_trace.png "Slow N+1 trace")
 
+As you can see, not only is this trace visually busier than the previous trace but it is also much slower (22.47ms
+duration versus 4.08ms duration from the previous trace). If you expand the trace segments you notice that the same Ecto
+queries keep getting executed over and over again inside of the LiveView `mount/3` callback whereas the previous trace
+only has a single Ecto query executed. This right here is a visual of the infamous N+1 query in action!
+
+If you look closely at the trace metadata from the slow trace, you'll notice that it starts off by making one call to
+`fly_otel.repo.query:users` and then makes numerous repeated calls to `fly_otel.repo.query:todo_list_items`. In this
+case the one call to the users is the `1` in `N+1` and the `N` is the 20 other calls that the backend had to make to the
+database to get the TODO list for each and every user (which is supported by the `Child Count` value of `21`):
+
+![N+1 metadata](./images/metadata_zoom_in.png "N+1 metadata")
+
 ## Conclusion

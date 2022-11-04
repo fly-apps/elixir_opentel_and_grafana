@@ -1,19 +1,3 @@
-# FlyOtel
-
-```session
-$ OTEL_RESOURCE_ATTRIBUTES=service.name=fly_otel iex -S mix phx.server
-```
-
-Fixing IPv6 resolution manually:
-
-```session
-:httpc.set_option(:ipfamily, :inet6)
-
-:httpc.get_option(:ipfamily)
-```
-
-# ---- Article contents ----
-
 # Elixir, OpenTelemetry, and the Infamous N+1
 
 ## Introduction

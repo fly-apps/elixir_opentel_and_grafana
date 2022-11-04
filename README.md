@@ -4,6 +4,14 @@
 $ OTEL_RESOURCE_ATTRIBUTES=service.name=fly_otel iex -S mix phx.server
 ```
 
+Fixing IPv6 resolution manually:
+
+```session
+:httpc.set_option(:ipfamily, :inet6)
+
+:httpc.get_option(:ipfamily)
+```
+
 # ---- Article contents ----
 
 # Elixir, OpenTelemetry, and the Infamous N+1
@@ -140,4 +148,14 @@ and view some real traces.
 Let's being by installing the `flyctl` CLI utility and authenticating with fly.io so we can start deploying our services
 using the following guide: https://fly.io/docs/hands-on/install-flyctl/.
 
-After you have done that,
+After you have done that, we are ready to start deploying all of the necessary services including our trace enabled
+Phoenix LiveView application. Let's begin by deploying Tempo which will store all of the traces that our collector
+exports.
+
+### Tempo
+
+In order to run Tempo in fly.io, we'll need to create our own Docker container that
+
+### Grafana
+
+### Phoenix App + Postgres

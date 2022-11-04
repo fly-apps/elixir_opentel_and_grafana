@@ -23,7 +23,7 @@ end
 if config_env() == :prod do
   config :opentelemetry_exporter,
     otlp_protocol: :http_protobuf,
-    otlp_endpoint: "http://localhost:4318"
+    otlp_endpoint: System.fetch_env!("OTLP_ENDPOINT")
 
   database_url =
     System.get_env("DATABASE_URL") ||

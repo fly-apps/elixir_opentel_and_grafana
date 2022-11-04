@@ -7,6 +7,14 @@ defmodule FlyOtel.Application do
 
   @impl true
   def start(_type, _args) do
+    # Set the correct :httpc :ipfamily flag so that the OpenTelemetry exporter
+    # can ship traces to Tempo in Fly since that requires IPv6. We'll check for
+    # the ECTO_IPV6 env var since the same configuration is required there when
+    # the application is deployed
+    if System.get_env("ECTO_IPV6") do
+      :httpc.set_option(:ipfamily, :inet6fb4)
+    end
+
     # Set up the OpenTelemetry to trace library telemetry events
     :ok = :opentelemetry_cowboy.setup()
     :ok = OpentelemetryPhoenix.setup()

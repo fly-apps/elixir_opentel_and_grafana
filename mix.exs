@@ -55,9 +55,9 @@ defmodule FlyOtel.MixProject do
       {:opentelemetry_liveview, "~> 1.0.0-rc.4"},
       {:opentelemetry_phoenix, "~> 1.0"},
       {:opentelemetry_cowboy, "~> 0.2"},
+      {:faker, "~> 0.17.0"},
 
       # Dev dependencies
-      {:faker, "~> 0.17.0", only: :dev},
       {:esbuild, "~> 0.4", runtime: Mix.env() == :dev},
       {:phoenix_live_reload, "~> 1.2", only: :dev}
     ]

@@ -1,0 +1,7 @@
+app = "fly-otel-grafana"
+
+[build]
+dockerfile = "./Dockerfile"
+
+[env]
+GF_INSTALL_PLUGINS = "grafana-worldmap-panel,grafana-clock-panel"

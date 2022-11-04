@@ -239,6 +239,41 @@ should be deployed! With that going, let's deploy Grafana next.
 
 ### Grafana
 
+Similarly to deploying Tempo, you'll want to create a new directory to house the Dockerfile, Grafana config, and Fly.io
+deployment manifest. The Dockerfile will once again be a simple wrapper that copies in a configuration file and starts
+Grafana:
+
+```dockerfile
+FROM grafana/grafana:9.2.3
+
+COPY ./grafana.ini /etc/grafana/grafana.ini
+
+CMD ["/run.sh"]
+```
+
+Our configuration file contains a flag to enable the experiment Tempo search functionality. We will need this in Grafana
+so that we can easily find relevant traces to our application:
+
+```ini
+[feature_toggles]
+enable = tempoSearch tempoBackendSearch
+```
+
+With that in place, all that is left is to put together a deployment manifest:
+
+```toml
+app = "YOUR-APP-grafana"
+
+[build]
+dockerfile = "./Dockerfile"
+```
+
+With that in place, we can go ahead and once again run `flyctl deploy` to get Grafana up and running on Fly.io. You'll
+notice again that Grafana is not accessible via the public internet. The reason for this being that it is fairly simple
+(and secure) to connect to internal applications running on Fly.io via Wireguard using `flyctl`. This limits your
+surface area on the public internet which is always a good things from a security standpoint. Let's connect to Grafana
+once it is deployed and configure our Tempo data source so we can visualize application traces.
+
 #### Configuring Tempo Datasource in Grafana
 
 ### Phoenix App + Postgres

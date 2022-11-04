@@ -276,4 +276,21 @@ once it is deployed and configure our Tempo data source so we can visualize appl
 
 #### Configuring Tempo Datasource in Grafana
 
+From inside of the directory containing the Grafana `fly.toml` manifest, run the following command:
+
+```session
+$ flyctl proxy 3000:3000
+```
+
+With that, you'll be able to open up a browser, navigate to `http://localhost:3000` and access your Grafana instance (by
+default the username and password are both `admin`)! After you log in, go to the data source configuration page 
+(`http://localhost:3000/datasources`) and click the `Add data source` button. After that, look for Tempo in the list of
+available data sources (under `Distributed tracing`) and select it.
+
+![Configure Tempo data source](.images/config_data_source.png "Configure Tempo data source")
+
 ### Phoenix App + Postgres
+
+
+
+

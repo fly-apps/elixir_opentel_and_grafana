@@ -21,25 +21,27 @@ that question, we'll need to reach for tools that fall under the observability u
 
 ## The Three Pillars of Observability
 
-Observability in the context of software is the ability to inspect and understand a running application. In order to
-introspect your application you will need to extract some data from it as it is running without hindering its ability to
+In the context of software, observability is the ability to inspect and understand a running application. In order to
+introspect an application we need to extract some data from while it is running without hindering its ability to
 service user requests. Observability tooling that interferes with an application's natural ability to service requests
-is not viable in production as it will be impacting your customers in undefined ways. So how we extract data from a
-running application in such a way? The three most common ways to achieve this goal are logging, metrics and traces.
-Combined they create the three pillars of observability and allow you to effectively analyze and debug your production
+is not viable in production as it impacts our customers in undefined ways. So how do we extract data from a
+running application in such a way?
+
+The three most common ways to achieve this are logging, metrics and traces.
+Combined, they create the three pillars of observability and allow us to effectively analyze and debug our production
 applications and systems. Let's briefly look at what each of these pillars does for us to get a sense for how they work
 together to give us application observability:
 
-- Logs: Logs contain detailed information as to what events are taking place within an application. Logs can be either
+- **Logs:** Logs contain detailed information as to what events are taking place within an application. Logs can be either
   structured (JSON for example) or unstructured (free text).
 
-- Metrics: Metrics are measurements of your application over time and can contain a few bits of metadata to enrich the
-  measurements and to give them more context.
+- **Metrics:** Metrics are measurements of your application over time and can contain a few bits of metadata to enrich the
+  measurements and give them more context.
 
-- Traces: Traces are a collection of related events with each event containing metadata as to what happened and for how
+- **Traces:** Traces are a collection of related events with each event containing metadata as to what happened and for how
   long. Traces can span across call stacks on a single machine and even across services via distributed tracing.
 
-In this article, we'll be focusing on the tracing observability pillar. Specifically, we will see how we can leverage
+In this article, we'll be focusing on the tracing observability pillar. Specifically, we'll see how we can leverage
 the OpenTelemetry tracing tooling to identify performance issues in an Elixir Phoenix LiveView application. Let's dive
 into what OpenTelemetry is and how we can set it up in our LiveView application.
 

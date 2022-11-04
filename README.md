@@ -2,24 +2,21 @@
 
 ## Introduction
 
-In this article, I'll be diving into the topic of observability and specifically the OpenTelemetry project. You'll see
-how you can set up the Elixir and Erlang OpenTelemetry libraries in a Phoenix LiveView application so that you can debug
-some troublesome database queries. You'll also see how this application can be deployed to Fly.io along with Grafana and
-Tempo so that you can store and query your sample traces. Before diving into the nitty-gritty, let's first get a sense
+In this article, we'll dive into the topic of observability and specifically the [OpenTelemetry project](https://opentelemetry.io/). We'll see
+how to set up the Elixir and [Erlang OpenTelemetry](https://github.com/open-telemetry/opentelemetry-erlang) libraries in a Phoenix LiveView application so you can debug troublesome database queries. We'll also see how this application can be deployed to Fly.io along with [Grafana](https://grafana.com/) and
+[Tempo](https://grafana.com/oss/tempo/) so we can store and query our sample traces. Before diving into the nitty-gritty, let's first get a sense
 for the application observability landscape.
 
-As a software engineer, it is crucial that you have insight into your running applications. This is especially true if
-you have customers paying-for and depending-on your products. As a customer and user, there are few things more
+As software engineers, it is crucial that we have insight into our running applications. This is especially true when
+we have customers paying-for and depending-on our products. As a customer and user, there are few things more
 frustrating that trying to get your work done and some SaaS product that you pay for is currently unavailable or running
-extremely slow. As a business, you may be able to get away with some down-time and slow services here and there, but if
-it becomes the norm, your customer-experience will deteriorate to the point where your customers start looking else
-where.
+extremely slow. As a business, we may be able to get away with some down-time and slow services here and there, but if
+it becomes the norm, the customer-experience deteriorates to the point where customers start looking elsewhere.
 
 But don't worry - it's not all doom and gloom! As software engineers, there are plenty of tools at our disposal that
-enable us to provide the best customer experience possible. For example, as you are developing a piece of software you
-can write unit, integration, end-to-end and stress tests to ensure that features are implemented properly and that they
+enable us to provide the best customer experience possible. For example, as we develop a piece of software, we can write unit, integration, end-to-end and stress tests to ensure that features are implemented properly and that they
 continue to work tomorrow even though the codebase is constantly changing. These tools work great for local development
-and CI/CD...but what do you do when your application is running in production and you are encountering issues? To answer
+and CI/CD... but what do you do when the application is running in production and we encounter issues? To answer
 that question, we'll need to reach for tools that fall under the observability umbrella.
 
 ## The Three Pillars of Observability

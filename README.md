@@ -373,4 +373,14 @@ database to get the TODO list for each and every user (which is supported by the
 
 ![N+1 metadata](./images/metadata_zoom_in.png "N+1 metadata")
 
+And just like that, you can now visualize and diagnose less than ideal database interactions all the way down the call
+stack.
+
 ## Conclusion
+
+Well done and thanks for sticking with me to the end! We covered quite a lot of ground and hopefully you picked up a
+couple of cool tips and tricks along the way. To recap, we learned about the various pillars of observability and took a
+deep dive into the tracing pillar. We learned about setting up an Elixir application with the OpenTelemetry tooling and
+even deployed our application along with some supporting monitoring tools to Fly.io. We then compared trace results
+between two different LiveView pages and were able to see the effects that an N+1 query would have on our application's
+performance.

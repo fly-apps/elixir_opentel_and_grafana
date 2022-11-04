@@ -120,13 +120,13 @@ back to IPv4 if needed. We lean on the `ECTO_IPV6` environment variable since Ec
 seeing how this is set up).
 
 Next we have a few Opentelemetry library calls that configure the trace collectors. The first three `setup/0` calls set
-up the Cowboy, Phoenix, and LiveView tracing libraries. These calls, instruct the OTel libraries to attach handlers to
+up the Cowboy, Phoenix, and LiveView tracing libraries. These calls instruct the OTel libraries to attach handlers to
 the telemetry events that are emitted by each of the underlying libraries. The Ecto tracing library requires a little
-more work to set up as we need to fetch the configured telemetry prefix so that the OTel library can attach the handler
+more work to set up as we need to fetch the configured telemetry prefix so the OTel library can attach the handler
 to the correct Repo event.
 
-With that in place, all that needs to be done now is to update some configuration in `runtime.exs` in order for the
-telemetry exporter to know where to send trace data. Add the following inside of the `config_env() == :prod` if-block:
+With that in place, all that needs to be done now is update some configuration in `runtime.exs` so the
+telemetry exporter knows where to send trace data. Add the following inside of the `config_env() == :prod` if-block:
 
 ```elixir
 if config_env() == :prod do
@@ -138,13 +138,13 @@ if config_env() == :prod do
 end
 ```
 
-With this in place, we are able to configure our application at runtime so that it is able to send traces to the correct
-service. In in this example we will be leaning on Tempo to capture and persist traces. Once the traces are in Tempo, we
-can then use Grafana to explore the persisted traces and see why our endpoints differ in performance.
+With this in place, we can configure our application at runtime to send traces to the correct
+service. In this example, we will lean on Tempo to capture and persist traces. Once the traces are in Tempo, we
+can use Grafana to explore the persisted traces and see why our endpoints differ in performance.
+Hopefully, it's clear that there is not a lot of ceremony or effort needed on our part to start collecting traces from our
+application.
 
-As you can see, there is not a lot of ceremony or effort needed on our part in order to start collecting traces from our
-application. Next, let's see how we can deploy our application and all of its dependencies to Fly.io so we can capture
-and view some real traces.
+Next, we'll deploy our application to Fly.io to capture and view some real traces!
 
 ## Deploying and Observing Your Application on Fly.io
 

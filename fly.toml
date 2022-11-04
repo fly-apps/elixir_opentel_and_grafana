@@ -1,4 +1,4 @@
-# fly.toml file generated for fly-otel on 2022-11-03T12:22:54-04:00
+# fly.toml file generated for fly-otel on 2022-11-04T04:10:37-04:00
 
 app = "fly-otel"
 kill_signal = "SIGTERM"
@@ -9,10 +9,10 @@ processes = []
   release_command = "/app/bin/migrate"
 
 [env]
+  OTEL_RESOURCE_ATTRIBUTES = "service.name=fly-otel"
+  OTLP_ENDPOINT = "http://ewr.fly-otel-tempo.internal:4318"
   PHX_HOST = "fly-otel.fly.dev"
   PORT = "8080"
-  OTEL_RESOURCE_ATTRIBUTES="service.name=fly-otel"
-  OTLP_ENDPOINT="http://ewr.fly-otel-tempo.internal:4318"
 
 [experimental]
   allowed_public_ports = []

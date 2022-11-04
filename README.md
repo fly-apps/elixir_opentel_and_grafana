@@ -170,7 +170,50 @@ Let's being by installing the `flyctl` CLI utility and authenticating with Fly.i
 using the following guide: https://fly.io/docs/hands-on/install-flyctl/.
 
 With that in place, you are ready to start deploying all of the necessary services including our trace enabled Phoenix
-LiveView application. Let's begin by deploying Tempo which will store all of the traces that our collector exports.
+LiveView application. Let's begin by deploying our Phoenix application.
+
+### Phoenix App + Postgres
+
+To deploy the instrumented Phoenix LiveView application, we first need to update the `fly.toml` file to reflect the name
+of your application. Specifically, you will need to update the following fields:
+
+- Update the `OTEL_RESOURCE_ATTRIBUTES` environment variable to have the correct `service.name` value for your service.
+- Update `OTLP_ENDPOINT` environment variable to have the correct URL for the Tempo service. The URL will have the
+  following format: `http://REGION.YOUR-APP-tempo.internal:4318` where `REGION` is one of the Fly.io datacenter regions.
+- Update the `PHX_HOST` environment variable to reflect the URL of your application based on your application name.
+
+With those fields updated, you can run `fly launch` and let the Fly.io CLI tool do the heavy lifting. Be sure to create
+a Postgres database when prompted so your application has something to communicate with. After the application is up and
+running, we'll want to hydrate the database with some data. Connect to the running instance by running 
+`flyctl ssh console` in the CLI. After you connect to the Phoenix LiveView application, go ahead and run 
+`/app/bin/YOUR_APP REMOTE` to attach an IEx session to the live application. After you connect to the application, you
+can run the following snippet of Elixir code to populate the database with some initial data:
+
+```elixir
+alias Faker.Person
+alias Faker.Lorem
+
+alias FlyOtel.Accounts
+alias FlyOtel.Accounts.TodoListItem
+alias FlyOtel.Accounts.User
+
+1..20
+|> Enum.each(fn _ ->
+  {:ok, %User{} = user} =
+    Accounts.create_user(%{
+      age: Enum.random(18..65),
+      name: "#{Person.first_name()} #{Person.last_name()}"
+    })
+
+  1..Enum.random(5..50)
+  |> Enum.each(fn _ ->
+    {:ok, %TodoListItem{}} = Accounts.create_todo_list_item(%{task: Lorem.sentence()}, user)
+  end)
+end)
+```
+
+With that done, you can navigate to your application in a browser (`https://YOUR-APP.fly.dev/users-fast`) to see it in
+action! Next we'll be deploying Tempo which will store all of the traces that our collector exports.
 
 ### Tempo
 
@@ -234,8 +277,8 @@ If you have deployed services to Fly.io before, you may be wondering why there i
 for this being that it is best to keep this service off of the public internet as only Grafana and the Phoenix
 application need to communicate with it.
 
-With that all in place, all that is left is to run `flyctl deploy` in the directory with all of the files and Tempo
-should be deployed! With that going, let's deploy Grafana next.
+With that all in place, all that is left is to run `flyctl apps create YOUR-APP-tempo && flyctl deploy` in the directory
+with all of the files and Tempo should be deployed! With that going, let's deploy Grafana next.
 
 ### Grafana
 
@@ -268,11 +311,12 @@ app = "YOUR-APP-grafana"
 dockerfile = "./Dockerfile"
 ```
 
-With that in place, we can go ahead and once again run `flyctl deploy` to get Grafana up and running on Fly.io. You'll
-notice again that Grafana is not accessible via the public internet. The reason for this being that it is fairly simple
-(and secure) to connect to internal applications running on Fly.io via Wireguard using `flyctl`. This limits your
-surface area on the public internet which is always a good things from a security standpoint. Let's connect to Grafana
-once it is deployed and configure our Tempo data source so we can visualize application traces.
+With that in place, we can go ahead and once again run `flyctl apps create YOUR-APP-grafana && flyctl deploy` to get
+Grafana up and running on Fly.io. You'll notice again that Grafana is not accessible via the public internet. The reason
+for this being that it is fairly simple (and secure) to connect to internal applications running on Fly.io via Wireguard
+using `flyctl`. This limits your surface area on the public internet which is always a good things from a security
+standpoint. Let's connect to Grafana once it is deployed and configure our Tempo data source so we can visualize
+application traces.
 
 #### Configuring Tempo Datasource in Grafana
 
@@ -293,11 +337,28 @@ where you Tempo instance is running and substituting `YOUR-APP` with the name yo
 
 If all goes well, after you click `Save & test`, you should a success message:
 
-
 ![Configured Tempo data source](./images/data_source_success.png "Configured Tempo data source")
 
-### Phoenix App + Postgres
+With Grafana running and connected to Tempo, all that is left is exercise the Phoenix application a little and to
+compare the trace results! Navigate a few times to `https://YOUR-APP.fly.dev/users-fast` and
+`https://YOUR-APP.fly.dev/users-slow` to ensure that there is trace information in Tempo and then click on the `Explore`
+button in the side nav in Grafana.
 
+## Comparing the Application Traces
 
+By default the selected data source should be Tempo, but if it is not be sure to select it. Then, in the row of filters
+labeled `Query type`, select `Search`. After that, select `/users-fast` from the `Span Name` drop down and click on one
+of the returned `Trace ID`s. After you click on a trace sample, you should see something like so:
 
+![Fast users page trace](./images/fast_live_view_trace.png "Fast users page trace")
 
+You can even click on individual trace segments to drill down and see what metadata there is associated with the event:
+
+![Trace metadata](./images/trace_metadata.png "Trace metadata")
+
+As a comparison, now select `/users-slow` from the `Span Name` drop down and see how the trace compares. You should see
+something like so:
+
+![Slow N+1 trace](./images/slow_trace.png "Slow N+1 trace")
+
+## Conclusion

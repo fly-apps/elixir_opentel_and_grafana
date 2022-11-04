@@ -1,4 +1,3 @@
-app = "fly-otel-tempo"
+# fly.toml file generated for fly-otel-tempo on 2022-11-04T03:46:44-04:00
 
-[build]
-dockerfile = "./Dockerfile"
+app = "fly-otel-tempo"

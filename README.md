@@ -214,7 +214,7 @@ CMD ["/tempo", "-config.file=/etc/tempo.yaml"]
 
 In that short Dockerfile, it mentioned `tempo-config.yaml`. We'll create the file to copy into the Dockerfile and configure how Tempo listens for trace data and how to store the data. Similar to the Dockerfile, this is the minimum requirement to get Tempo up and running and for a production application some additional configuration might be needed. The contents of the YAML file are:
 
-Filename: `temp-config.yaml`
+File: `temp-config.yaml`
 
 ```yaml
 server:
@@ -282,7 +282,7 @@ CMD ["/run.sh"]
 Our configuration file contains a flag to enable the experiment Tempo search functionality. We use this in Grafana
 to help easily find relevant traces for our application:
 
-Filename: `grafana.ini`
+File: `grafana.ini`
 
 ```ini
 [feature_toggles]
@@ -291,7 +291,7 @@ enable = tempoSearch tempoBackendSearch
 
 With that ready, we just need the `fly.toml` file:
 
-Filename: `fly.toml`
+File: `fly.toml`
 
 ```toml
 app = "YOUR-APP-grafana"
@@ -305,71 +305,73 @@ Grafana up and running on Fly.io. Also, note the file exposes no services on the
 using `flyctl`. This limits our exposed surface area on the public internet which is always a good things from a security
 standpoint. 
 
-Let's connect to Grafana once it is deployed and configure our Tempo data source so we can visualize
+Let's connect to Grafana after it is deployed and configure our Tempo data source so we can visualize
 application traces.
 
 #### Configuring Tempo Datasource in Grafana
 
-From inside of the directory containing the Grafana `fly.toml` manifest, run the following command:
+From inside the directory containing the Grafana `fly.toml` manifest, run the following command:
 
 ```session
 $ flyctl proxy 3000:3000
 ```
 
-With that, you'll be able to open up a browser, navigate to `http://localhost:3000` and access your Grafana instance (by
-default the username and password are both `admin`)! After you log in, go to the data source configuration page 
+Now, open a browser and navigate to `http://localhost:3000` to access your Grafana instance (by
+default, the username and password are both `admin`)! After logging in, go to the data source configuration page 
 (`http://localhost:3000/datasources`) and click the `Add data source` button. After that, look for Tempo in the list of
-available data sources (under `Distributed tracing`) and select it. On the next page the only field that you will need
-to fill out is the `URL` field and you will need to fill it out as shown below (substituting `REGION` with the region
-where you Tempo instance is running and substituting `YOUR-APP` with the name you gave Tempo when you created it):
+available data sources (under `Distributed tracing`) and select it. On the next page, the only field we need
+to fill out is the `URL` field. We want to fill it out as shown below (substituting `REGION` with the region
+where the Tempo instance is running and substituting `YOUR-APP` with the name given to Tempo when it was created):
 
 ![Configure Tempo data source](./images/config_data_source.png "Configure Tempo data source")
 
-If all goes well, after you click `Save & test`, you should a success message:
+If all goes well, after clicking `Save & test`, we should see a success message:
 
 ![Configured Tempo data source](./images/data_source_success.png "Configured Tempo data source")
 
-With Grafana running and connected to Tempo, all that is left is exercise the Phoenix application a little and to
+With Grafana running and connected to Tempo, all that is left is to exercise the Phoenix application a little and 
 compare the trace results! Navigate a few times to `https://YOUR-APP.fly.dev/users-fast` and
 `https://YOUR-APP.fly.dev/users-slow` to ensure that there is trace information in Tempo and then click on the `Explore`
 button in the side nav in Grafana.
 
 ## Comparing the Application Traces
 
-By default the selected data source should be Tempo, but if it is not be sure to select it. Then, in the row of filters
+By default, the selected data source should be Tempo, but if it is not, be sure to select it. Then, in the row of filters
 labeled `Query type`, select `Search`. After that, select `/users-fast` from the `Span Name` drop down and click on one
-of the returned `Trace ID`s. After you click on a trace sample, you should see something like so:
+of the returned `Trace ID`s. After clicking on a trace sample, we should see something like this:
 
 ![Fast users page trace](./images/fast_live_view_trace.png "Fast users page trace")
 
-You can even click on individual trace segments to drill down and see what metadata there is associated with the event:
+We can even click on individual trace segments to drill down and see what metadata is associated with the event:
 
 ![Trace metadata](./images/trace_metadata.png "Trace metadata")
 
-As a comparison, now select `/users-slow` from the `Span Name` drop down and see how the trace compares. You should see
-something like so:
+As a comparison, now select `/users-slow` from the `Span Name` drop down and see how the trace compares. It should appear
+something like this:
 
 ![Slow N+1 trace](./images/slow_trace.png "Slow N+1 trace")
 
-As you can see, not only is this trace visually busier than the previous trace but it is also much slower (22.47ms
-duration versus 4.08ms duration from the previous trace). If you expand the trace segments you notice that the same Ecto
+As we can see, not only is this trace visually busier than the previous trace but it is also much slower (22.47ms
+duration versus 4.08ms duration from the previous trace). When we expand the trace segments, we can see that the same Ecto
 queries keep getting executed over and over again inside of the LiveView `mount/3` callback whereas the previous trace
-only has a single Ecto query executed. This right here is a visual of the infamous N+1 query in action!
+only has a single Ecto query executed. This right here is a visual representation of the infamous N+1 query in action!
 
-If you look closely at the trace metadata from the slow trace, you'll notice that it starts off by making one call to
+Looking closely at the trace metadata from the slow trace, we can see that it starts off by making one call to
 `fly_otel.repo.query:users` and then makes numerous repeated calls to `fly_otel.repo.query:todo_list_items`. In this
 case the one call to the users is the `1` in `N+1` and the `N` is the 20 other calls that the backend had to make to the
 database to get the TODO list for each and every user (which is supported by the `Child Count` value of `21`):
 
 ![N+1 metadata](./images/metadata_zoom_in.png "N+1 metadata")
 
-And just like that, you can now visualize and diagnose less than ideal database interactions all the way down the call
+And just like that, we can now visualize and diagnose less than ideal database interactions all the way down the call
 stack.
 
 ## Conclusion
 
-Well done and thanks for sticking with me to the end! We covered quite a lot of ground and hopefully you picked up a
-couple of cool tips and tricks along the way. To recap, we learned about the various pillars of observability and took a
+Well done and thanks for sticking through to the end! We covered quite a lot of ground and hopefully you picked up a
+couple of cool tips and tricks along the way. 
+
+To recap, we learned about the various pillars of observability and took a
 deep dive into the tracing pillar. We learned about setting up an Elixir application with the OpenTelemetry tooling and
 even deployed our application along with some supporting monitoring tools to Fly.io. We then compared trace results
 between two different LiveView pages and were able to see the effects that an N+1 query would have on our application's

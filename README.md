@@ -200,8 +200,8 @@ Next we'll deploy Tempo to store all of the traces that our collector exports.
 
 ### Tempo
 
-To run Tempo in Fly.io, we need to create our own Docker container that wraps the Docker container provided
-to us from Grafana. (TODO: PREVIOUS SENTENCE IS A BIT CONFUSING, it doesn't look like we are "wrapping" it.) The following Dockerfile is the bare minimum required to deploy Tempo to Fly.io and will probably need
+To run Tempo in Fly.io, we need to create our own Docker container (built upon the Gradana Tempo image) that includes our necessary configuration file.
+The following Dockerfile is the bare minimum required to deploy Tempo to Fly.io and will probably need
 some more work and configuration if you want to set this up for production:
 
 ```dockerfile

@@ -9,11 +9,11 @@ Please refer to [the article](https://fly.io/phoenix-files/opentelemetry-and-the
 
 ## FlyOtel
 
-The root of the repo is an [Elixir](https://elixir-lang.org/) [Phoenix](https://www.phoenixframework.org/) application called `FlyOtel`. It is a [LiveView](https://github.com/phoenixframework/phoenix_live_view/) application that demonstrates an efficient and N+1 inneficient way to query the database. 
+The root of the repo is an [Elixir](https://elixir-lang.org/) [Phoenix](https://www.phoenixframework.org/) application called `FlyOtel`. It is a [LiveView](https://github.com/phoenixframework/phoenix_live_view/) application that demonstrates an efficient and N+1 inneficient way to query the database.
 
 ## Grafana
 
-[Grafana](https://grafana.com/) is the tool used to visualize the application request traces. 
+[Grafana](https://grafana.com/) is the tool used to visualize the application request traces.
 
 Find the files in the `fly_apps/grafana` directory. It sets up a Dockerfile image, provides minimal config and can be deployed to Fly.io.
 
@@ -22,3 +22,9 @@ Find the files in the `fly_apps/grafana` directory. It sets up a Dockerfile imag
 [Tempo](https://grafana.com/oss/tempo/) is used to store the trace data that Grafana displays.
 
 Find the files in `fly_apps/tempo` directory. It sets up a Dockerfile image, provides minimal config and can be deployed to Fly.io.
+
+## Local Development/Testing
+
+If you would like to test drive these tools on your own machine, you can use the `docker-compose.yml` in the
+`local_docker` directory and spin up Grafana and Tempo along side your local running instance of the LiveView
+application.
